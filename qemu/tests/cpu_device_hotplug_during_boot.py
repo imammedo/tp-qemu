@@ -21,6 +21,7 @@ def run(test, params, env):
     """
     vcpu_devices = params.objects("vcpu_devices")
     unplug_during_boot = params.get_boolean("unplug_during_boot")
+    boot_timeout = float(params.get("boot_pattern_timeout", 120))
     boot_patterns = [
         r".*Starting .Coldplug All udev Devices.*",
         r".*Finished .*Coldplug All udev Devices.*",
@@ -36,7 +37,7 @@ def run(test, params, env):
 
     error_context.base_context("Hotplug vCPU devices during boot stage.", test.log.info)
     error_context.context("Verify guest is in the boot stage.", test.log.info)
-    vm.serial_console.read_until_any_line_matches(boot_patterns)
+    vm.serial_console.read_until_any_line_matches(boot_patterns, timeout=boot_timeout)
 
     error_context.context(
         "Hotplug vCPU devices, waiting for guest alive.", test.log.info
@@ -62,7 +63,9 @@ def run(test, params, env):
             "Verify guest is in boot stage after reboot.", test.log.info
         )
         vm.serial_console.read_until_any_line_matches(reboot_patterns)
-        vm.serial_console.read_until_any_line_matches(boot_patterns)
+        vm.serial_console.read_until_any_line_matches(
+            boot_patterns, timeout=boot_timeout
+        )
 
         error_context.context(
             "Hotunplug vCPU devices, waiting for guest alive.", test.log.info
